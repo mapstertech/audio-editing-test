@@ -79,9 +79,7 @@ class App extends Component {
                         const url = URL.createObjectURL(blob)
                         const aud = new Audio(url)
                         this.launchPeaks(aud)
-                        this.setState({
-                            trimmed: aud
-                        })
+                        this.setState({ trimmed: aud, audioBlob: blob })
                     })
                 })
                 .catch((err) => console.log(err))
@@ -170,9 +168,25 @@ class App extends Component {
     deleteSegment = (segName) => {
         if (this.state.peaks) {
             const segmentsCopy = JSON.parse(JSON.stringify(this.state.segments))
-            this.state.peaks.segments.removeById(segName)
             segmentsCopy.splice(this.state.segments.indexOf(segName), 1)
             this.setState({ segments: segmentsCopy })
+            this.spliceAudio(this.state.peaks.segments.getSegment(segName))
+        }
+    }
+
+    spliceAudio = (segment) => {
+        if (this.state.audioBlob) {
+            const { startTime, endTime } = segment
+            jsAudio.load(this.state.audioBlob).then((audio) => {
+                audio.remove(startTime, endTime - startTime).getWav((err, audio) => {
+                    const blob = new Blob([audio])
+                    const url = URL.createObjectURL(blob)
+                    const aud = new Audio(url)
+                    this.launchPeaks(aud)
+                    this.setState({ trimmed: aud })
+                })
+            })
+            .catch((err) => console.log(err))
         }
     }
 
