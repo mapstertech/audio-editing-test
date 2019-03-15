@@ -4,7 +4,10 @@
   "private": true,
   "dependencies": {
     "audio": "github:audiojs/audio",
+    "audio-buffer-from": "^1.1.1",
+    "audiobuffer-to-wav": "^1.0.0",
     "howler": "^2.1.1",
+    "peaks.js": "^0.9.14",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-scripts": "2.1.8"

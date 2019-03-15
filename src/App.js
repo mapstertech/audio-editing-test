@@ -1,7 +1,11 @@
 import React, { Component } from 'react'
 import './App.css'
 import jsAudio from 'audio'
+import Peaks from 'peaks.js'
+import bufferFrom from 'audio-buffer-from'
+import toWav from 'audiobuffer-to-wav'
 
+var counter = 0
 class App extends Component {
     constructor(props) {
         super(props)
@@ -9,7 +13,8 @@ class App extends Component {
         this.state = {
             mediaRecorder: null,
             audio: null,
-            audioUrl: null
+            audioUrl: null,
+            peaks: null
         }
     }
     componentDidMount() {
@@ -39,10 +44,9 @@ class App extends Component {
                     audio
                 })
 
-                audio.play()
-                this.setState({ audio })
-                this.setState({ audioUrl })
-                this.setState({ audioBlob })
+                // audio.play()
+                this.launchPeaks(audio)
+                this.setState({ audio, audioUrl, audioBlob })
             })
         })
     }
@@ -55,18 +59,54 @@ class App extends Component {
     }
 
     trimRecording = () => {
-        let trimmed = null
         if (this.state.audioBlob) {
             jsAudio.load(this.state.audioBlob).then((audio) => {
-                console.log(audio)
-                audio.trim({ left: true, right: true }).save('trimmed.mp3')
-                this.setState({ trimmed: audio.trim({ left: true, right: true }) })
+                console.log('pretrim:',audio)
+                // audio.trim({ left: true, right: true }).save('trimmed.mp3')
+                audio.trim({ left: true, right: true }).save('trimmed.wav', (err, audio) => {
 
-                this.state.trimmed.play()
+                    const blob = new Blob([audio])
+                    const url = URL.createObjectURL(blob)
+                    const aud = new Audio(url)
+
+                    this.launchPeaks(aud)
+                    this.setState({ trimmed: aud })
+                })
+
             })
             .catch((err) => console.log(err))
         } else {
             console.log('no audio')
+        }
+    }
+
+    launchPeaks = (audio) => {
+        console.log('launching peaks calld')
+        console.log('AUDIO:', audio)
+        if (audio) {
+            const peaks = new Peaks.init({
+                container: document.querySelector('#peaks-container'),
+                mediaElement: audio,
+                audioContext: new AudioContext(),
+                zoomLevels:  [64, 128, 256, 512, 1024, 2048, 4096]
+            })
+
+            peaks.on('peaks.ready', () => {
+                console.log(`counter: ${counter++}`)
+                this.setState({ peaks })
+            })               
+        }
+    }
+
+    playPeak = () => {
+        if (this.state.peaks) {
+            this.state.peaks.player.play()
+        }
+    }
+
+    stopPeak = () => {
+        if (this.state.peaks) {
+            this.state.peaks.player.pause()            
         }
     }
 
@@ -80,17 +120,20 @@ class App extends Component {
         return (
             <div className="App">
                 <p>AUDIO MVP DITI</p>
-                <div onClick={() => this.startRecording()}>
-                    <button>START RECORDING</button>
+                <div id="peaks-container" style={{ height: '66vh' }}>
                 </div>
-                <div onClick={() => this.endRecording()}>
-                    <button>END RECORDING</button>
+                <div id="peaks-controller">
+                    <button onClick={() => this.playPeak()} style={{ margin: 10 }}>PLAY</button>
+                    <button onClick={() => this.stopPeak()} style={{ margin: 10 }}>STOP</button>
+                    <button onClick={() => this.trimRecording()} style={{ margin: 10 }}>TRIM</button>
                 </div>
-                <div onClick={() => this.trimRecording()}>
-                    <button>TRIM RECORDING</button>
-                </div>
-                <div onClick={() => this.playLongRecording()}>
-                    <button>PLAY LONG RECORDING RECORDING</button>
+                <div style={{ margin: 20 }}>
+                    <div onClick={() => this.startRecording()} style={{ margin: 20 }}>
+                        <button>START RECORDING</button>
+                    </div>
+                    <div onClick={() => this.endRecording()} style={{ margin: 20 }}>
+                        <button>END RECORDING</button>
+                    </div>
                 </div>
             </div>
         )
