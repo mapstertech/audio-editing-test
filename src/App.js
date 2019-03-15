@@ -96,7 +96,7 @@ class App extends Component {
                 container: document.querySelector('#peaks-container'),
                 mediaElement: audio,
                 audioContext: new AudioContext(),
-                zoomLevels: [64, 128, 256, 512, 1024, 2048, 4096]
+                zoomLevels: [16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
             })
 
             peaks.on('peaks.ready', () => {
